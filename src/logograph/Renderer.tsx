@@ -1,52 +1,50 @@
-import React from "react";
-import { type LogographInput, generateLogograph } from "./Engine";
+import type { FC } from 'react';
+import { generateLogograph } from './Engine';
+import { resolvePath } from './pathAttributes';
+import type { LogographInput } from './types';
 
 interface LogographRendererProps {
   input: LogographInput;
   className?: string;
-  overrideColor?: string; // Optional: for unified export or monochrome theming
-  ariaLabel?: string;     // Optional: for accessibility
+  /** Forces one stroke/fill color and drops the per-style Tailwind classes. */
+  overrideColor?: string;
+  ariaLabel?: string;
 }
 
-export const LogographRenderer: React.FC<LogographRendererProps> = ({ 
-  input, 
-  className = "",
+export const LogographRenderer: FC<LogographRendererProps> = ({
+  input,
+  className = '',
   overrideColor,
-  ariaLabel = "Logographic cipher glyph"
-}) => {
-  
-  // Generate the style-specific paths and visual properties
-  const paths = generateLogograph(input);
+  ariaLabel = 'Logographic cipher glyph',
+}) => (
+  <svg
+    viewBox="0 0 100 100"
+    xmlns="http://www.w3.org/2000/svg"
+    className={`w-full h-full ${className}`}
+    role="img"
+    aria-label={ariaLabel}
+    style={{
+      fill: 'none',
+      stroke: overrideColor ?? 'currentColor',
+      color: overrideColor,
+      strokeLinecap: 'round',
+      strokeLinejoin: 'round',
+    }}
+  >
+    {generateLogograph(input).map((path, index) => {
+      const { d, fill, strokeWidth, strokeDasharray, opacity } = resolvePath(path);
 
-  return (
-    <svg
-      viewBox="0 0 100 100"
-      xmlns="http://www.w3.org/2000/svg"
-      className={`w-full h-full ${className}`}
-      role="img"
-      aria-label={ariaLabel}
-      style={{
-        fill: "none",
-        // If overrideColor is present, apply it; otherwise rely on Tailwind text-* classes
-        stroke: overrideColor || "currentColor",
-        color: overrideColor || undefined, // Ensures fill="currentColor" inherits the override
-        strokeWidth: 2, // Reduced from 4 to 2 as a much safer fallback
-        strokeLinecap: "round",
-        strokeLinejoin: "round",
-      }}
-    >
-      {paths.map((p, index) => (
-        <path 
-          key={index} 
-          d={p.d} 
-          className={overrideColor ? "" : p.className}
-          // Explicitly map the new engine properties with safe fallbacks
-          strokeWidth={p.strokeWidth}
-          strokeDasharray={p.strokeDasharray}
-          fill={p.fill || "none"}
-          opacity={p.opacity}
+      return (
+        <path
+          key={index}
+          d={d}
+          className={overrideColor ? '' : path.className}
+          strokeWidth={strokeWidth}
+          strokeDasharray={strokeDasharray}
+          fill={fill}
+          opacity={opacity}
         />
-      ))}
-    </svg>
-  );
-};
+      );
+    })}
+  </svg>
+);
