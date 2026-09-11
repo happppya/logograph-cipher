@@ -1,5 +1,7 @@
 # LogographCipher
 
+This project encodes text data into logographs. You can export as SVG.
+
 Four values, five bits each — set a plate, pull a print. Client-side React app that turns text and numbers into logograph glyphs rendered as inline SVG. No server, no storage, just local state.
 
 Two modes: **Specimen** — craft a single glyph with four 0–31 sliders; **Sequence** — tokenize a string into a grid of glyphs and export a standalone SVG.
