@@ -92,12 +92,12 @@ drives one *radical* of the glyph, interpreted as five bit flags: `1`, `2`, `4`,
 The **style** is picked by *position of the largest value* (ties resolve to the lowest index), via
 `selectStyle` / `GLYPH_STYLES` in `Engine.ts`. The array order is load-bearing:
 
-| Dominant index | Style | Radicals |
-| --- | --- | --- |
-| 0 | `Emperor` | Frame, Crown, Heart, Roots (strict horizontal/vertical "bento" grid) |
-| 1 | `Celestial` | Spine, Left Wing, Right Wing, Aura (concentric orbital curves) |
-| 2 | `Prismatic` | Matrix, Facet, Core, Refraction (isometric hex lattice) |
-| 3 | `Abyssal` | Vent, Current, Polyp, Depth (asymmetric organic branching) |
+| Dominant index | Style | Radicals | Visual language |
+| --- | --- | --- | --- |
+| 0 | `Emperor` | Frame, Crown, Heart, Roots | 100% horizontal/vertical strokes, heaviest weights — architecture |
+| 1 | `Celestial` | Spine, Left Wing, Right Wing, Aura | ~90% curves, thinnest strokes, no straight segment at all — orbits |
+| 2 | `Prismatic` | Matrix, Facet, Core, Refraction | Angled edges rather than axis-aligned ones, plus a solid faceted gem and rays that escape the hull |
+| 3 | `Abyssal` | Vent, Current, Polyp, Depth | Asymmetric organic curves, dashed tendrils and solid nodes |
 
 Each style module exports a `GlyphStyle`: its display `name`, its four slider `radicals`, and its
 `build` function. The Builder UI reads the name and labels straight from the selected style, so
@@ -116,9 +116,21 @@ callers can rely on index stability. A path's `d` may be an empty string when al
 - Each style file declares its bit meanings as `as const` maps (`FRAME.leftWall`, `CROWN.roof`, …);
   use those instead of raw `& 1` / `& 2` literals. Add a key when you add a subpath.
 - Radicals occupy reserved zones documented in the header comment of each style file. Respect them:
-  containment ("no zone bleeding") is what makes styles visually consistent. Radicals that need
-  layered depth express it with `opacity`, not by overlapping coordinates. Abyssal's path order
-  (depth, vent, current, polyp) is back-to-front on purpose.
+  containment ("no zone bleeding") is what makes styles visually consistent. Adjacent bands may meet
+  deliberately (Emperor's heart columns tie the crown to the roots) but a radical must never scatter
+  across the canvas. Radicals that need layered depth express it with `opacity`, not by overlapping
+  coordinates. Abyssal's path order (depth, vent, current, polyp) is back-to-front on purpose.
+- **Every flag must be a large feature.** Sequence mode draws every glyph in one ink color, so shape,
+  weight, and texture are the only things carrying the cipher; a subtle bit is a lost bit. Flipping a
+  single flag must change roughly 1% or more of the glyph's bounding box — measure it rather than
+  guessing, with the harness described under "Verifying look and legibility". Two traps break this
+  rule, and both were real bugs here: nesting a new subpath *inside* an already-filled shape (it
+  disappears — Prismatic's core, four invisible flags), and drawing a new feature directly on top of
+  another radical's geometry (Emperor's stabilizers, which ran alongside the frame pillars). Give each
+  flag its own slot, or at most share junction points.
+- Stroke weights carry as much identity as shape: Emperor runs 3.5/3/2.75, Prismatic 1.75-2.5,
+  Celestial 1.75-2.5, Abyssal 1.5-2.75. Keep Emperor the heaviest and Celestial the lightest, or the
+  two stop reading as different objects at a 64px cell.
 - Path data is absolute-command SVG (`M`, `L`, `A`, `C`, `Q`, `Z`) with explicit coordinates and a
   trailing space per subpath. Geometry is collected in a `string[]` per radical and joined into one
   `d`, so appending a subpath means pushing another literal.
@@ -154,6 +166,14 @@ document if you touch it.
 - **Dominant-value UX.** Because style comes from the largest value, moving a single slider can
   switch the entire glyph's morphology; the Builder's "Active Morphology" badge and slider names
   change accordingly. That's intended, not a bug.
+- **Verifying look and legibility.** There is no test runner, and screenshots are not always available,
+  so verify geometry by rasterizing it: import `generateLogograph` and `resolvePath` from the dev server
+  in the browser (`await import('/src/logograph/Engine.ts')`), render the paths into an
+  `<svg width="128" height="128" viewBox="0 0 100 100">`, draw it to a canvas, and compare masks. Two
+  numbers matter: the XOR area from flipping one flag (1.1% or better in any style, at both 128px and
+  the real 64px cell size) and whether a nearest-centroid classifier can still name the style from
+  pixels alone (95%+ today). Remember that `fill="currentColor"` resolves to *black* in a data-URL
+  image document — map it to white in the harness or filled shapes measure as invisible.
 - **Gradient utilities.** Use `bg-radial from-… to-…` (Tailwind 4.1+). Writing
   `bg-[radial-gradient(…,var(--tw-gradient-stops))]` without a gradient-position utility leaves
   `--tw-gradient-position` empty, which invalidates the var chain and silently computes to

@@ -1,13 +1,15 @@
 import type { GlyphStyle, LogographInput, RenderPath } from '../types';
 
 const FRAME = { leftWall: 1, rightWall: 2, ceiling: 4, floor: 8, pillars: 16 } as const;
-const CROWN = { bar: 1, roof: 2, kingpin: 4, leftSlope: 8, rightSlope: 16 } as const;
-const HEART = { chamber: 1, divider: 2, conduit: 4, cross: 8, couplers: 16 } as const;
-const ROOTS = { taproot: 1, leftLeg: 2, rightLeg: 4, foundation: 8, stabilizers: 16 } as const;
+const CROWN = { slab: 1, colonnade: 2, belfry: 4, leftWingWall: 8, rightWingWall: 16 } as const;
+const HEART = { chamber: 1, band: 2, columns: 4, core: 8, couplers: 16 } as const;
+const ROOTS = { taproot: 1, leftFoot: 2, rightFoot: 4, foundation: 8, stabilizers: 16 } as const;
 
 /**
- * Emperor: strict horizontal/vertical "bento" grid, no zone bleeding.
- * Zones: frame on the 15-85 square, crown at y 22-34, heart at x 25-75 / y 40-60, roots at y 66-80.
+ * Emperor: architecture. Horizontal and vertical strokes only — not one diagonal or curve —
+ * and the heaviest weights of the four styles, so it reads as a built structure.
+ * Zones: frame on the 15-85 square, crown y 18-36, heart y 36-66 (its couplers reach x 10-90),
+ * roots y 62-90. The bands meet on purpose — the heart's columns tie the crown to the roots.
  */
 const build = (input: LogographInput): RenderPath[] => {
   const [frame, crown, heart, roots] = input;
@@ -17,35 +19,35 @@ const build = (input: LogographInput): RenderPath[] => {
   if (frame & FRAME.rightWall) frameParts.push('M 85 15 L 85 85 ');
   if (frame & FRAME.ceiling) frameParts.push('M 15 15 L 85 15 ');
   if (frame & FRAME.floor) frameParts.push('M 15 85 L 85 85 ');
-  if (frame & FRAME.pillars) frameParts.push('M 18 20 L 18 80 M 82 20 L 82 80 ');
-  if (frame === 0) frameParts.push('M 25 15 L 75 15 M 25 85 L 75 85 ');
+  if (frame & FRAME.pillars) frameParts.push('M 20 20 L 20 80 M 80 20 L 80 80 ');
+  if (frame === 0) frameParts.push('M 22 15 L 78 15 M 22 85 L 78 85 ');
 
   const crownParts: string[] = [];
-  if (crown & CROWN.bar) crownParts.push('M 25 24 L 75 24 ');
-  if (crown & CROWN.roof) crownParts.push('M 35 30 L 50 22 L 65 30 ');
-  if (crown & CROWN.kingpin) crownParts.push('M 50 22 L 50 34 ');
-  if (crown & CROWN.leftSlope) crownParts.push('M 28 34 L 35 26 ');
-  if (crown & CROWN.rightSlope) crownParts.push('M 72 34 L 65 26 ');
+  if (crown & CROWN.slab) crownParts.push('M 22 24 L 78 24 M 22 32 L 78 32 ');
+  if (crown & CROWN.colonnade) crownParts.push('M 34 18 L 34 36 M 42 18 L 42 36 M 58 18 L 58 36 M 66 18 L 66 36 ');
+  if (crown & CROWN.belfry) crownParts.push('M 44 18 L 56 18 L 56 36 L 44 36 Z M 44 27 L 56 27 M 50 18 L 50 36 ');
+  if (crown & CROWN.leftWingWall) crownParts.push('M 22 18 L 22 36 M 22 18 L 32 18 M 22 27 L 32 27 M 22 36 L 32 36 ');
+  if (crown & CROWN.rightWingWall) crownParts.push('M 78 18 L 78 36 M 78 18 L 68 18 M 78 27 L 68 27 M 78 36 L 68 36 ');
 
   const heartParts: string[] = [];
-  if (heart & HEART.chamber) heartParts.push('M 30 42 L 70 42 L 70 58 L 30 58 Z ');
-  if (heart & HEART.divider) heartParts.push('M 30 50 L 70 50 ');
-  if (heart & HEART.conduit) heartParts.push('M 50 40 L 50 60 ');
-  if (heart & HEART.cross) heartParts.push('M 38 45 L 62 55 M 62 45 L 38 55 ');
-  if (heart & HEART.couplers) heartParts.push('M 22 50 L 28 50 M 72 50 L 78 50 ');
+  if (heart & HEART.chamber) heartParts.push('M 26 40 L 74 40 L 74 62 L 26 62 Z ');
+  if (heart & HEART.band) heartParts.push('M 26 48 L 74 48 M 26 54 L 74 54 ');
+  if (heart & HEART.columns) heartParts.push('M 42 36 L 42 66 M 58 36 L 58 66 M 42 51 L 58 51 ');
+  if (heart & HEART.core) heartParts.push('M 34 44 L 66 44 L 66 58 L 34 58 Z ');
+  if (heart & HEART.couplers) heartParts.push('M 10 44 L 26 44 M 74 44 L 90 44 M 10 58 L 26 58 M 74 58 L 90 58 ');
 
   const rootParts: string[] = [];
-  if (roots & ROOTS.taproot) rootParts.push('M 50 66 L 50 80 ');
-  if (roots & ROOTS.leftLeg) rootParts.push('M 48 70 L 28 78 ');
-  if (roots & ROOTS.rightLeg) rootParts.push('M 52 70 L 72 78 ');
-  if (roots & ROOTS.foundation) rootParts.push('M 35 80 L 65 80 ');
-  if (roots & ROOTS.stabilizers) rootParts.push('M 25 68 L 25 76 M 75 68 L 75 76 ');
+  if (roots & ROOTS.taproot) rootParts.push('M 44 62 L 44 90 M 56 62 L 56 90 M 44 76 L 56 76 ');
+  if (roots & ROOTS.leftFoot) rootParts.push('M 44 76 L 24 76 L 24 88 M 24 82 L 34 82 M 34 76 L 34 88 ');
+  if (roots & ROOTS.rightFoot) rootParts.push('M 56 76 L 76 76 L 76 88 M 76 82 L 66 82 M 66 76 L 66 88 ');
+  if (roots & ROOTS.foundation) rootParts.push('M 18 88 L 82 88 M 26 82 L 74 82 ');
+  if (roots & ROOTS.stabilizers) rootParts.push('M 22 68 L 30 68 L 30 84 M 78 68 L 70 68 L 70 84 ');
 
   return [
-    { d: frameParts.join(''), className: 'text-emerald-500', strokeWidth: 3 },
-    { d: crownParts.join(''), className: 'text-emerald-400', strokeWidth: 2 },
-    { d: heartParts.join(''), className: 'text-emerald-300', strokeWidth: 1.5 },
-    { d: rootParts.join(''), className: 'text-emerald-600', strokeWidth: 2.5 },
+    { d: frameParts.join(''), className: 'text-emerald-500', strokeWidth: 3.5 },
+    { d: crownParts.join(''), className: 'text-emerald-400', strokeWidth: 3 },
+    { d: heartParts.join(''), className: 'text-emerald-300', strokeWidth: 2.75 },
+    { d: rootParts.join(''), className: 'text-emerald-600', strokeWidth: 3.5 },
   ];
 };
 
