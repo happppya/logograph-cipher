@@ -1,32 +1,30 @@
-# React + TypeScript + Vite
+# LogographCipher
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+Four values, five bits each — set a plate, pull a print. Client-side React app that turns text and numbers into logograph glyphs rendered as inline SVG. No server, no storage, just local state.
 
-Currently, two official plugins are available:
+Two modes: **Specimen** — craft a single glyph with four 0–31 sliders; **Sequence** — tokenize a string into a grid of glyphs and export a standalone SVG.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Run
 
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the Oxlint configuration
-
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+```bash
+npm install
+npm run dev      # Vite + HMR
+npm run build    # tsc -b && vite build — must pass
+npm run lint     # oxlint
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+## How it works
+
+Text → tokens (`/\d+|[A-Za-z,.!?:-]/`) → values (A–Z → 0–25, `,.-!?:` → 26–31, digits % 32) → groups of four → one glyph per group. The largest value picks the style (Emperor / Celestial / Prismatic / Abyssal). Each style maps its five bit flags to distinct geometry in a fixed `0 0 100 100` viewBox. Changing the mapping is a breaking change — it invalidates exported SVGs.
+
+## Stack
+
+React 19 · TypeScript 6 · Vite 8 · Tailwind 4 (`@import "tailwindcss"` in `src/index.css`, no config file) · oxlint
+
+```
+src/App.tsx              # only state owner
+src/cipher/encode.ts     # cipher contract
+src/logograph/Engine.ts  # style registry + generateLogograph
+src/logograph/styles/*   # one geometry module per style
+src/components/*         # presentational controls
+```
